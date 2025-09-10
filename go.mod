@@ -1,4 +1,4 @@
-module ggl
+module github.com/gangantongxue/ggl
 
 go 1.24
 

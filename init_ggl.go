@@ -1,3 +1,5 @@
+// Copyright (c) 2025 gangantongxue. All rights reserved.
+// Licensed under the MIT License.
 package ggl
 
 import (

@@ -4,7 +4,7 @@
 ## 功能特点
 - 高性能：基于 zap 实现，保持了 zap 的高性能特性
 - 日志按天轮转：每天自动生成新的日志文件
-- 支持多种日志级别：Debug、Info、Warn、Error、Panic、Fatal
+- 支持多种日志级别：Debug、Info、Warn、Err、Panic、Fatal
 - 可配置：支持自定义日志文件目录、大小、备份数量、保留时间等
 - 多目标输出：可以同时输出到文件和控制台
 - 全局替换：可以替换 zap 的全局日志器
@@ -24,26 +24,22 @@ go get github.com/gangantongxue/ggl
 package main
 
 import (
-    "ggl"
-    "go.uber.org/zap"
+	"errors"
+	"github.com/gangantongxue/ggl"
 )
 
 func main() {
-    // 使用默认配置初始化日志库
-    logger := ggl.NewDailyLogger(ggl.DefaultConfig())
-    defer logger.Stop()
-    
-    // 使用各种日志级别
-    ggl.Debug("这是一条调试日志")
-    ggl.Info("这是一条信息日志")
-    ggl.Warn("这是一条警告日志")
-    ggl.Error("这是一条错误日志")
-    
-    // 带字段的日志
-    ggl.Info("用户登录", 
-        zap.String("username", "admin"),
-        zap.Int("age", 30),
-    )
+	// 使用默认配置初始化日志库
+	logger := ggl.NewDailyLogger(ggl.DefaultConfig())
+	defer logger.Stop()
+
+	// 使用各种日志级别
+	ggl.Debug("这是一条调试日志", ggl.Str("key", "value"))
+	ggl.Info("这是一条信息日志", ggl.Str("key", "value"))
+	ggl.Warn("这是一条警告日志", ggl.Str("key", "value"))
+	ggl.Error("这是一条错误日志", ggl.Err(errors.New("这是一个错误")))
+	ggl.Panic("这是一条严重错误日志", ggl.Str("key", "value"))
+	ggl.Fatal("这是一条致命错误日志", ggl.Str("key", "value"))
 }
 ```
 
@@ -53,7 +49,7 @@ func main() {
 package main
 
 import (
-    "ggl"
+    "github.com/gangantongxue/ggl"
 )
 
 func main() {
@@ -94,7 +90,7 @@ ggl 提供了以下日志级别方法：
 - `Debug(msg string, fields ...zap.Field)`: 记录调试信息
 - `Info(msg string, fields ...zap.Field)`: 记录一般信息
 - `Warn(msg string, fields ...zap.Field)`: 记录警告信息
-- `Error(msg string, fields ...zap.Field)`: 记录错误信息
+- `Err(msg string, fields ...zap.Field)`: 记录错误信息
 - `Panic(msg string, fields ...zap.Field)`: 记录严重错误并触发 panic
 - `Fatal(msg string, fields ...zap.Field)`: 记录致命错误并退出程序
 

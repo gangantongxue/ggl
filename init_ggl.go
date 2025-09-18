@@ -1,20 +1,21 @@
-// Copyright (c) 2025 gangantongxue. All rights reserved.
+// Package ggl Copyright (c) 2025 gangantongxue. All rights reserved.
 // Licensed under the MIT License.
 package ggl
 
 import (
-	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // Config 配置
 type Config struct {
+	LogFileName   string // 日志文件名
 	LogFileDir    string // 日志文件存放目录
 	LogMaxSize    int    // 日志文件最大大小，单位MB
 	LogMaxBackups int    // 日志文件最大备份数量
@@ -26,6 +27,7 @@ type Config struct {
 // DefaultConfig DefeatConfig 默认配置
 func DefaultConfig() *Config {
 	return &Config{
+		LogFileName:   "ggl_log_2006-01-02.log",
 		LogFileDir:    "./log",
 		LogMaxSize:    100,
 		LogMaxBackups: 10,
@@ -43,14 +45,14 @@ type DailyLogger struct {
 }
 
 // getLogFileName 获取日志文件名
-func getLogFileName(logFileDir string) string {
-	return filepath.Join(logFileDir, fmt.Sprintf("landlady_log_%s.log", time.Now().Format("2006-01-02")))
+func getLogFileName(logFileDir string, logFileName string) string {
+	return filepath.Join(logFileDir, time.Now().Format(logFileName))
 }
 
 // newZapLogger 初始化zap日志
 func newZapLogger(cfg *Config) *zap.Logger {
 	lumberJackLogger := &lumberjack.Logger{
-		Filename:   getLogFileName(cfg.LogFileDir),
+		Filename:   getLogFileName(cfg.LogFileDir, cfg.LogFileName),
 		MaxSize:    cfg.LogMaxSize,
 		MaxBackups: cfg.LogMaxBackups,
 		MaxAge:     cfg.LogMaxAge,
@@ -94,8 +96,8 @@ func newZapLogger(cfg *Config) *zap.Logger {
 	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.WarnLevel))
 }
 
-// NewDailyLogger 创建DailyLogger实例
-func NewDailyLogger(cfg *Config) *DailyLogger {
+// New 创建ggl实例
+func New(cfg *Config) *DailyLogger {
 	d := &DailyLogger{
 		quit: make(chan struct{}),
 	}

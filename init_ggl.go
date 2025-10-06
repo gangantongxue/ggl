@@ -15,25 +15,27 @@ import (
 
 // Config 配置
 type Config struct {
-	LogFileName   string // 日志文件名
-	LogFileDir    string // 日志文件存放目录
-	LogMaxSize    int    // 日志文件最大大小，单位MB
-	LogMaxBackups int    // 日志文件最大备份数量
-	LogMaxAge     int    // 日志文件最大保留时间，单位天
-	LogCompress   bool   // 是否压缩日志文件
-	ToConsole     bool   // 是否同时输出到控制台
+	LogFileName    string        // 日志文件名
+	LogFileDir     string        // 日志文件存放目录
+	LogMaxSize     int           // 日志文件最大大小，单位MB
+	LogMaxBackups  int           // 日志文件最大备份数量
+	LogMaxAge      int           // 日志文件最大保留时间，单位天
+	LogCompress    bool          // 是否压缩日志文件
+	ToConsole      bool          // 是否同时输出到控制台
+	RotateInterval time.Duration // 日志轮转时间间隔，默认1天
 }
 
 // DefaultConfig DefeatConfig 默认配置
 func DefaultConfig() *Config {
 	return &Config{
-		LogFileName:   "ggl_log_2006-01-02.log",
-		LogFileDir:    "./log",
-		LogMaxSize:    100,
-		LogMaxBackups: 10,
-		LogMaxAge:     7,
-		LogCompress:   true,
-		ToConsole:     false,
+		LogFileName:    "ggl_log_2006-01-02.log",
+		LogFileDir:     "./log",
+		LogMaxSize:     100,
+		LogMaxBackups:  10,
+		LogMaxAge:      7,
+		LogCompress:    true,
+		ToConsole:      false,
+		RotateInterval: time.Hour * 24, // 默认1天轮转一次
 	}
 }
 
@@ -42,6 +44,16 @@ type DailyLogger struct {
 	mu     sync.Mutex
 	logger *zap.Logger
 	quit   chan struct{}
+}
+
+// New 创建ggl实例
+func New(cfg *Config) *DailyLogger {
+	d := &DailyLogger{
+		quit: make(chan struct{}),
+	}
+	d.rotateLogger(cfg)
+	go d.scheduleRotate(cfg)
+	return d
 }
 
 // getLogFileName 获取日志文件名
@@ -96,16 +108,6 @@ func newZapLogger(cfg *Config) *zap.Logger {
 	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.WarnLevel))
 }
 
-// New 创建ggl实例
-func New(cfg *Config) *DailyLogger {
-	d := &DailyLogger{
-		quit: make(chan struct{}),
-	}
-	d.rotateLogger(cfg)
-	go d.scheduleRotate(cfg)
-	return d
-}
-
 // rotateLogger 切换到新的日志文件
 func (d *DailyLogger) rotateLogger(cfg *Config) {
 	d.mu.Lock()
@@ -123,7 +125,7 @@ func (d *DailyLogger) rotateLogger(cfg *Config) {
 func (d *DailyLogger) scheduleRotate(cfg *Config) {
 	for {
 		now := time.Now()
-		next := now.Add(24 * time.Hour).Truncate(24 * time.Hour)
+		next := now.Add(cfg.RotateInterval).Truncate(cfg.RotateInterval)
 		timer := time.NewTimer(next.Sub(now))
 
 		select {
